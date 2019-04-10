@@ -1,5 +1,8 @@
 package queue
 
+import (
+	"github.com/arschles/crathens/pkg/log"
+)
 func ghFetcher(
 	ctx context.Context,
 	ghCl *github.Client,
@@ -14,7 +17,7 @@ func ghFetcher(
 		case mod := <-modCh:
 			tags, err := gh.FetchTags(ctx, ghCl, mod)
 			if err != nil {
-				log.Printf("Error fetching GH tags for %s (%s)", mod, err)
+				log.Err("fetching GH tags for %s (%s)", mod, err)
 			}
 			for _, tag := range tags {
 				send(ctx, nextCh, tag.Name)

@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
-	"strings"
+	"time"
 
+	"github.com/arschles/crathens/pkg/log"
 	"github.com/arschles/crathens/pkg/queue"
 	"github.com/arschles/crathens/pkg/resp"
 	"github.com/google/go-github/github"
@@ -28,43 +28,26 @@ func main() {
 	res := new(resp.Catalog)
 	resp, _, err := cl.Get(endpoint + "/catalog").EndStruct(res)
 	if err != nil {
-		log.Fatal(err)
+		log.Err("getting the /catalog endpoint (%s)", err)
+		os.Exit(1)
 	} else if resp.StatusCode != 200 {
-		log.Fatalf("status code was %d", resp.StatusCode)
+		log.Err("/catalog status code was %d", resp.StatusCode)
+		os.Exit(1)
 	}
 
 	var crawler queue.Crawler
 	for _, modAndVer := range res.ModsAndVersions {
-		toCtx, done := context.WithTimeout(ctx, 500 * time.Millisecond)
+		toCtx, done := context.WithTimeout(ctx, 500*time.Millisecond)
 		defer done()
 		if err := crawler.Enqueue(toCtx, modAndVer); err != nil {
-			log.Printf("Error crawling %s (%s)", modAndVer, err)
+			log.Warn("crawling %s (%s)", modAndVer, err)
 		}
 	}
 
-	waitCtx, done := context.WithTimeout(ctx, 1 * time.Second)
+	waitCtx, done := context.WithTimeout(ctx, 1*time.Second)
 	defer done()
 	if err := crawler.Wait(waitCtx); err != nil {
-		log.Fatalf("Waiting for crawler failed (%s)", err)
+		log.Err("Waiting for crawler failed (%s)", err)
+		os.Exit(1)
 	}
-
-// 	tagCrawler := queue.NewTagCrawler()
-// 	fetcher := queue.NewTagFetcher(ghCl, tagCrawler.Add)
-
-// 	go func() {
-// 		for tag := range tagCrawler.Ch() {
-// 			log.Printf("running go get for %s@%s", tag.Module, tag.Name)
-// 		}
-// 	}()
-
-// 	for _, mav := range res.ModsAndVersions {
-// 		log.Printf("module %s", mav.Module)
-// 		if strings.HasPrefix(mav.Module, "github.com") {
-// 			log.Printf("----> using GH API to get versions for %s", mav.Module)
-// 			if err := fetcher.Fetch(ctx, mav.Module); err != nil {
-// 				log.Fatal(err)
-// 			}
-// 		}
-// 	}
-// 	fetcher.Wait()
-// }
+}
