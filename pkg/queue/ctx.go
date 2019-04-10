@@ -6,7 +6,7 @@ import (
 )
 
 type ctxCancelPair struct {
-	ctx  context.context
+	ctx  context.Context
 	done func()
 }
 
