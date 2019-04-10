@@ -16,7 +16,9 @@ func ghFetcher(
 			if err != nil {
 				log.Printf("Error fetching GH tags for %s (%s)", mod, err)
 			}
-			nextCh <- tags
+			for _, tag := range tags {
+				send(ctx, nextCh, tag.Name)
+			}
 		}
 	}
 }
