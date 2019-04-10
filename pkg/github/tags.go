@@ -21,8 +21,8 @@ func FetchTags(
 		return nil, err
 	}
 	vers := make([]string, len(tags))
-	for _, tag := range tags {
-		vers[i] = tag.Name
+	for i, tag := range tags {
+		vers[i] = *tag.Name
 	}
 	return vers, nil
 }
