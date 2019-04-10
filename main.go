@@ -12,9 +12,13 @@ import (
 	"github.com/parnurzeal/gorequest"
 )
 
-const endpoint = "https://athens.azurefd.net"
-
 func main() {
+	endpoint := "https://athens.azurefd.net"
+	envEndpoint := os.Getenv("GOPROXY")
+	if envEndpoint != "" {
+		endpoint = envEndpoint
+	}
+
 	ctx := context.Background()
 	cl := gorequest.New()
 
