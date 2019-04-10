@@ -20,6 +20,7 @@ func main() {
 		log.Err("Processing configuration (%s)", err)
 		os.Exit(1)
 	}
+	log.Info("Configuration:\n%s", cfg)
 
 	ctx := context.Background()
 	cl := gorequest.New()
@@ -31,7 +32,7 @@ func main() {
 	ghCl := github.NewClient(tport.Client())
 
 	res := new(resp.Catalog)
-	resp, _, err := cl.Get(endpoint + "/catalog").EndStruct(res)
+	resp, _, err := cl.Get(cfg.Endpoint + "/catalog").EndStruct(res)
 	if err != nil {
 		log.Err("getting the /catalog endpoint (%s)", err)
 		os.Exit(1)
