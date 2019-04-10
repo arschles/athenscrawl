@@ -1,11 +1,11 @@
-package main
+package github
 
 import (
 	"fmt"
 	"strings"
 )
 
-func splitGHModule(mod string) (string, string, error) {
+func SplitModule(mod string) (string, string, error) {
 	spl := strings.Split(mod, "/")
 	if len(spl) < 3 {
 		return "", "", fmt.Errorf("module malformed")

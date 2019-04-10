@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/arschles/crathens/pkg/queue"
 	"github.com/google/go-github/github"
 	"github.com/parnurzeal/gorequest"
 )
@@ -30,21 +31,24 @@ func main() {
 	} else if resp.StatusCode != 200 {
 		log.Fatalf("status code was %d", resp.StatusCode)
 	}
+
+	tagCrawler := queue.NewTagCrawler()
+	fetcher := queue.NewTagFetcher(ghCl, tagCrawler.Add)
+
+	go func() {
+		for tag := range tagCrawler.Ch() {
+			log.Printf("running go get for %s@%s", tag.Module, tag.Name)
+		}
+	}()
+
 	for _, mav := range res.ModsAndVersions {
 		log.Printf("module %s", mav.Module)
 		if strings.HasPrefix(mav.Module, "github.com") {
-			log.Printf("----> using GH API to get versions")
-			owner, repo, err := splitGHModule(mav.Module)
-			if err != nil {
+			log.Printf("----> using GH API to get versions for %s", mav.Module)
+			if err := fetcher.Fetch(ctx, mav.Module); err != nil {
 				log.Fatal(err)
-			}
-			tags, _, err := ghCl.Repositories.ListTags(ctx, owner, repo, nil)
-			if err != nil {
-				log.Fatal(err)
-			}
-			for _, tag := range tags {
-				log.Print(tag.Name)
 			}
 		}
 	}
+	fetcher.Wait()
 }
