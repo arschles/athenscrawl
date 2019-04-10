@@ -5,26 +5,28 @@ import (
 	"os"
 	"time"
 
+	"github.com/arschles/crathens/pkg/config"
 	"github.com/arschles/crathens/pkg/log"
 	"github.com/arschles/crathens/pkg/queue"
 	"github.com/arschles/crathens/pkg/resp"
 	"github.com/google/go-github/github"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/parnurzeal/gorequest"
 )
 
 func main() {
-	endpoint := "https://athens.azurefd.net"
-	envEndpoint := os.Getenv("GOPROXY")
-	if envEndpoint != "" {
-		endpoint = envEndpoint
+	cfg := new(config.Config)
+	if err := envconfig.Process("crathens", cfg); err != nil {
+		log.Err("Processing configuration (%s)", err)
+		os.Exit(1)
 	}
 
 	ctx := context.Background()
 	cl := gorequest.New()
 
 	tport := &github.UnauthenticatedRateLimitedTransport{
-		ClientID:     os.Getenv("GITHUB_CLIENT_ID"),
-		ClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
+		ClientID:     cfg.GHClientID,
+		ClientSecret: cfg.GHClientSecret,
 	}
 	ghCl := github.NewClient(tport.Client())
 
@@ -41,8 +43,8 @@ func main() {
 	crawler := queue.InMemory(
 		ctx,
 		ghCl,
-		2*time.Second, // TODO: make configurable
-		2*time.Second, // TODO: make configurable
+		time.Duration(cfg.GHTickDurSec)*time.Second,
+		time.Duration(cfg.AthensTickDurSec)*time.Second,
 	)
 	for _, modAndVer := range res.ModsAndVersions {
 		// TODO: collate all the versions for a single module, so that
