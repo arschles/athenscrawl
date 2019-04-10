@@ -42,6 +42,8 @@ func main() {
 	for _, modAndVer := range res.ModsAndVersions {
 		toCtx, done := context.WithTimeout(ctx, 500*time.Millisecond)
 		defer done()
+		// TODO: collate all the versions for a single module, so that
+		// we don't have tons of redundant GH requests
 		if err := crawler.Enqueue(toCtx, modAndVer); err != nil {
 			log.Warn("crawling %s (%s)", modAndVer, err)
 		}
