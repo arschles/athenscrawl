@@ -6,6 +6,7 @@ import (
 
 	gh "github.com/arschles/crathens/pkg/github"
 	"github.com/arschles/crathens/pkg/log"
+	"github.com/arschles/crathens/pkg/resp"
 	"github.com/google/go-github/github"
 )
 
@@ -13,7 +14,7 @@ func ghFetcher(
 	ctx context.Context,
 	ghCl *github.Client,
 	modCh <-chan string,
-	nextCh chan<- github.RepositoryTag,
+	nextCh chan<- resp.ModuleAndVersion,
 	ticker *time.Ticker,
 ) {
 	for range ticker.C {
@@ -26,8 +27,17 @@ func ghFetcher(
 				log.Warn("fetching GH tags for %s (%s)", mod, err)
 			}
 			for _, tag := range tags {
-				if err := send(ctx, nextCh, tag.Name); err != nil {
-					log.Warn("queueing tag %s (%s)", tag.Name, err)
+				modAndVer := resp.ModuleAndVersion{
+					Module:  mod,
+					Version: tag,
+				}
+				select {
+				case <-ctx.Done():
+					log.Warn(
+						"failed sending tag %s due to context cancel",
+						tag,
+					)
+				case nextCh <- modAndVer:
 				}
 			}
 		}
