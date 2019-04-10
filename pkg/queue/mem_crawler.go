@@ -29,6 +29,7 @@ func InMemory(
 	go ghFetcher(ghFetchCoordinator, ghCl, athensWarmCoordinator.ch)
 
 	go athensWarmer(endpoint, athensWarmCoordinator)
+
 	return &inMemoryCrawler{
 		ghFetchCoord:    ghFetchCoordinator,
 		athensWarmCoord: athensWarmCoordinator,

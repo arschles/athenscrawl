@@ -12,6 +12,7 @@ type Config struct {
 	GHClientSecret  string `envconfig:"GITHUB_CLIENT_SECRET"`
 	GHTickDurMS     int    `envconfig:"GITHUB_API_TICK" default:"1000"`
 	AthensTickDurMS int    `envconfig:"ATHENS_TICK" default:"1000"`
+	Debug           bool   `envconfig:"DEBUG" default:"false"`
 }
 
 func (c *Config) GHTickDur() time.Duration {

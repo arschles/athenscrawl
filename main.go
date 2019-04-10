@@ -20,7 +20,8 @@ func main() {
 		log.Err("Processing configuration (%s)", err)
 		os.Exit(1)
 	}
-	log.Info("Configuration:\n%s", cfg)
+	log.SetDebug(cfg.Debug)
+	log.Debug("Configuration:\n%s", cfg)
 
 	ctx := context.Background()
 	cl := gorequest.New()
