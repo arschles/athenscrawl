@@ -7,6 +7,7 @@ import (
 
 	"github.com/arschles/crathens/pkg/resp"
 	"github.com/google/go-github/github"
+	"github.com/pkg/errors"
 )
 
 type inMemoryCrawler struct {
@@ -41,10 +42,10 @@ func (i *inMemoryCrawler) Enqueue(
 	case i.ghFetchCoord.ch <- mav:
 		return nil
 	case <-ctx.Done():
-		return fmt.Errorf(
+		return errors.WithStack(fmt.Errorf(
 			"Failed to start crawling module %s due to context timeout",
 			mav.Module,
-		)
+		))
 	}
 }
 
@@ -53,13 +54,12 @@ func (i *inMemoryCrawler) Wait(context.Context) error {
 	case <-i.athensWarmCoord.ctx.Done():
 		i.stopTickers()
 		i.stopContexts()
-		return fmt.Errorf("Athens fetcher stopped")
+		return errors.WithStack(fmt.Errorf("Athens fetcher stopped"))
 	case <-i.ghFetchCoord.ctx.Done():
 		i.stopTickers()
 		i.stopContexts()
-		return fmt.Errorf("Github fetcher stopped")
+		return errors.WithStack(fmt.Errorf("Github fetcher stopped"))
 	}
-	return nil
 }
 
 func (i *inMemoryCrawler) stopTickers() {
