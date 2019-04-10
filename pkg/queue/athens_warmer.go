@@ -16,6 +16,7 @@ func athensWarmer(endpoint string, coord *coordinator) {
 	for range coord.ticker.C {
 		select {
 		case <-coord.ctx.Done():
+			log.Debug("Athens warmer exiting because the context is done")
 			return
 		case mod := <-coord.ch:
 			resp, _, errs := gorequest.
@@ -23,7 +24,6 @@ func athensWarmer(endpoint string, coord *coordinator) {
 				Get(modInfoPath(endpoint, mod.Module, mod.Version)).
 				End()
 			if len(errs) > 0 {
-				// TODO: send an error back on a chan
 				log.Warn(
 					"fetching GH tags for %s (%s)",
 					mod,

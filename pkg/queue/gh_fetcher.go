@@ -15,11 +15,11 @@ func ghFetcher(
 	for range coord.ticker.C {
 		select {
 		case <-coord.ctx.Done():
+			log.Debug("GitHub fetcher exiting because the context is done")
 			return
 		case mod := <-coord.ch:
 			tags, err := gh.FetchTags(coord.ctx, ghCl, mod.Module)
 			if err != nil {
-				// TODO: send an error back on a chan
 				log.Warn("fetching GH tags for %s (%s)", mod, err)
 			}
 			for _, tag := range tags {

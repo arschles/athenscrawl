@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/arschles/crathens/pkg/log"
 	"github.com/arschles/crathens/pkg/resp"
 	"github.com/google/go-github/github"
 	"github.com/pkg/errors"
@@ -42,6 +43,7 @@ func (i *inMemoryCrawler) Enqueue(
 ) error {
 	select {
 	case i.ghFetchCoord.ch <- mav:
+		log.Debug("enqueued %s onto the in-memory crawler", mav)
 		return nil
 	case <-ctx.Done():
 		return errors.WithStack(fmt.Errorf(
@@ -54,10 +56,16 @@ func (i *inMemoryCrawler) Enqueue(
 func (i *inMemoryCrawler) Wait(context.Context) error {
 	select {
 	case <-i.athensWarmCoord.ctx.Done():
+		log.Debug(
+			"The Athens warmer stopped, cleaning up tickers/contexts and error-ing",
+		)
 		i.stopTickers()
 		i.stopContexts()
 		return errors.WithStack(fmt.Errorf("Athens fetcher stopped"))
 	case <-i.ghFetchCoord.ctx.Done():
+		log.Debug(
+			"The GitHub fetcher stopped, cleaning up tickers/contexts and error-ing",
+		)
 		i.stopTickers()
 		i.stopContexts()
 		return errors.WithStack(fmt.Errorf("Github fetcher stopped"))

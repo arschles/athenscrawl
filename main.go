@@ -33,6 +33,7 @@ func main() {
 	ghCl := github.NewClient(tport.Client())
 
 	res := new(resp.Catalog)
+	log.Debug("getting catalog endpoint")
 	resp, _, err := cl.Get(cfg.Endpoint + "/catalog").EndStruct(res)
 	if err != nil {
 		log.Err("getting the /catalog endpoint (%s)", err)
@@ -50,8 +51,7 @@ func main() {
 		cfg.AthensTickDur(),
 	)
 	for _, modAndVer := range res.ModsAndVersions {
-		// TODO: collate all the versions for a single module, so that
-		// we don't have tons of redundant GH requests
+		log.Debug("enqueueing %s", modAndVer)
 		if err := crawler.Enqueue(ctx, modAndVer); err != nil {
 			log.Warn("crawling %s (%s)", modAndVer, err)
 		}
