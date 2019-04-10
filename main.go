@@ -18,7 +18,6 @@ func main() {
 	ctx := context.Background()
 	cl := gorequest.New()
 
-	// https://github.com/settings/applications/1045516
 	tport := &github.UnauthenticatedRateLimitedTransport{
 		ClientID:     os.Getenv("GITHUB_CLIENT_ID"),
 		ClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
