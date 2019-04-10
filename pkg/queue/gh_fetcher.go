@@ -19,6 +19,7 @@ func ghFetcher(
 		case mod := <-coord.ch:
 			tags, err := gh.FetchTags(coord.ctx, ghCl, mod.Module)
 			if err != nil {
+				// TODO: send an error back on a chan
 				log.Warn("fetching GH tags for %s (%s)", mod, err)
 			}
 			for _, tag := range tags {
@@ -26,10 +27,7 @@ func ghFetcher(
 				mod.Version = tag
 				select {
 				case <-coord.ctx.Done():
-					log.Warn(
-						"failed sending tag %s due to context cancel",
-						tag,
-					)
+					return
 				case nextCh <- newMod:
 				}
 			}
