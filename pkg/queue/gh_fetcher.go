@@ -1,9 +1,6 @@
 package queue
 
 import (
-	"context"
-	"time"
-
 	gh "github.com/arschles/crathens/pkg/github"
 	"github.com/arschles/crathens/pkg/log"
 	"github.com/arschles/crathens/pkg/resp"
@@ -11,33 +8,29 @@ import (
 )
 
 func ghFetcher(
-	ctx context.Context,
+	coord *coordinator,
 	ghCl *github.Client,
-	modCh <-chan string,
 	nextCh chan<- resp.ModuleAndVersion,
-	ticker *time.Ticker,
 ) {
-	for range ticker.C {
+	for range coord.ticker.C {
 		select {
-		case <-ctx.Done():
+		case <-coord.ctx.Done():
 			return
-		case mod := <-modCh:
-			tags, err := gh.FetchTags(ctx, ghCl, mod)
+		case mod := <-coord.ch:
+			tags, err := gh.FetchTags(coord.ctx, ghCl, mod.Module)
 			if err != nil {
 				log.Warn("fetching GH tags for %s (%s)", mod, err)
 			}
 			for _, tag := range tags {
-				modAndVer := resp.ModuleAndVersion{
-					Module:  mod,
-					Version: tag,
-				}
+				newMod := mod
+				mod.Version = tag
 				select {
-				case <-ctx.Done():
+				case <-coord.ctx.Done():
 					log.Warn(
 						"failed sending tag %s due to context cancel",
 						tag,
 					)
-				case nextCh <- modAndVer:
+				case nextCh <- newMod:
 				}
 			}
 		}

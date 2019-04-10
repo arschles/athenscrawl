@@ -10,12 +10,8 @@ import (
 )
 
 type inMemoryCrawler struct {
-	ghFetchTicker    *time.Ticker
-	ghFetchCh        <-chan string
-	ghFetch          *ctxCancelPair
-	athensWarmTicker *time.Ticker
-	athensWarmCh     <-chan string
-	athensWarm       *ctxCancelPair
+	ghFetchCoord    *coordinator
+	athensWarmCoord *coordinator
 }
 
 // InMemory creates a new crawler implementation that works only in memory
@@ -25,28 +21,15 @@ func InMemory(
 	ghTickDur time.Duration,
 	athensTickDur time.Duration,
 ) Crawler {
-	ghFetchTicker := time.NewTicker(ghTickDur)
-	ghFetchCh := make(chan string)
-	ghFetchCtx, ghFetchCtxDone := context.WithCancel(ctx)
-	go ghFetcher(gitFetchCtx, ghCl, modCh, athensWarmCh, ghFetchTicker)
+	ghFetchCoordinator := newCoordinator(ctx, ghTickDur)
+	athensWarmCoordinator := newCoordinator(ctx, athensTickDur)
 
-	athensWarmTicker := time.NewTicker(athensTickDr)
-	athensWarmCh := make(chan resp.ModuleAndVersion)
-	athensWarmCtx, athensWarmCtxdone := context.WithCancel(ctx)
-	go athensWarmer(athensWarmCtx, athensWarmCh, athensWarmTicker)
+	go ghFetcher(ghFetchCoordinator, ghCl, athensWarmCoordinator.ch)
+
+	go athensWarmer(athensWarmCoordinator)
 	return &inMemoryCrawler{
-		ghTicker:  ghTicker,
-		ghFetchCh: ghFetchCh,
-		ghFetch: &ctxCancelPair{
-			ctx:  ghFetchCtx,
-			done: ghFetchCtxDone,
-		},
-		athensWarmTicker: athensWarmTicker,
-		athensWarmCh:     athensWarmCh,
-		athensWarm: &ctxCancelPair{
-			ctx:  athensFetchCtx,
-			done: athensFechCtxDone,
-		},
+		ghFetchCoord:    ghFetchCoordinator,
+		athensWarmCoord: athensWarmCoordinator,
 	}
 }
 
@@ -55,7 +38,7 @@ func (i *inMemoryCrawler) Crawl(
 	mav resp.ModuleAndVersion,
 ) error {
 	select {
-	case i.githubFetchCh <- mav.Module:
+	case i.ghFetchCoord.ch <- mav:
 		return nil
 	case <-ctx.Done():
 		return fmt.Errorf(
@@ -67,11 +50,11 @@ func (i *inMemoryCrawler) Crawl(
 
 func (i *inMemoryCrawler) Wait(context.Context) error {
 	select {
-	case <-i.athensWarm.ctx.Done():
+	case <-i.athensWarmCoord.ctx.Done():
 		i.stopTickers()
 		i.stopContexts()
 		return fmt.Errorf("Athens fetcher stopped")
-	case <-i.githubFetch.ctx.Done():
+	case <-i.ghFetchCoord.ctx.Done():
 		i.stopTickers()
 		i.stopContexts()
 		return fmt.Errorf("Github fetcher stopped")
@@ -80,11 +63,11 @@ func (i *inMemoryCrawler) Wait(context.Context) error {
 }
 
 func (i *inMemoryCrawler) stopTickers() {
-	i.ghFetchTicker.Stop()
-	i.athensWarmTicker.Stop()
+	i.ghFetchCoord.ticker.Stop()
+	i.athensWarmCoord.ticker.Stop()
 }
 
-func (i *inMemoryCrawler) stopContextx() {
-	i.ghFetch.done()
-	i.athensWarm.done()
+func (i *inMemoryCrawler) stopContexts() {
+	i.ghFetchCoord.ctxDone()
+	i.athensWarmCoord.ctxDone()
 }
