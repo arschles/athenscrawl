@@ -33,7 +33,7 @@ func InMemory(
 	}
 }
 
-func (i *inMemoryCrawler) Crawl(
+func (i *inMemoryCrawler) Enqueue(
 	ctx context.Context,
 	mav resp.ModuleAndVersion,
 ) error {
