@@ -11,7 +11,7 @@ require (
 	github.com/mattn/go-isatty v0.0.7 // indirect
 	github.com/moul/http2curl v1.0.0 // indirect
 	github.com/parnurzeal/gorequest v0.2.15
-	github.com/pkg/errors v0.8.1 // indirect
+	github.com/pkg/errors v0.8.1
 	github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a // indirect
 	github.com/souz9/errlist v0.1.0
 	golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3 // indirect

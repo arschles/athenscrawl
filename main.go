@@ -41,15 +41,13 @@ func main() {
 	crawler := queue.InMemory(
 		ctx,
 		ghCl,
-		100*time.Millisecond, // TODO: make configurable
-		100*time.Millisecond, // TODO: make configurable
+		2*time.Second, // TODO: make configurable
+		2*time.Second, // TODO: make configurable
 	)
 	for _, modAndVer := range res.ModsAndVersions {
-		toCtx, done := context.WithTimeout(ctx, 500*time.Millisecond)
-		defer done()
 		// TODO: collate all the versions for a single module, so that
 		// we don't have tons of redundant GH requests
-		if err := crawler.Enqueue(toCtx, modAndVer); err != nil {
+		if err := crawler.Enqueue(ctx, modAndVer); err != nil {
 			log.Warn("crawling %s (%s)", modAndVer, err)
 		}
 	}
