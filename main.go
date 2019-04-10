@@ -45,8 +45,8 @@ func main() {
 		ctx,
 		cfg.Endpoint,
 		ghCl,
-		time.Duration(cfg.GHTickDurSec)*time.Second,
-		time.Duration(cfg.AthensTickDurSec)*time.Second,
+		cfg.GHTickDur(),
+		cfg.AthensTickDur(),
 	)
 	for _, modAndVer := range res.ModsAndVersions {
 		// TODO: collate all the versions for a single module, so that
