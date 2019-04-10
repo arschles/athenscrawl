@@ -43,6 +43,7 @@ func main() {
 
 	crawler := queue.InMemory(
 		ctx,
+		cfg.Endpoint,
 		ghCl,
 		time.Duration(cfg.GHTickDurSec)*time.Second,
 		time.Duration(cfg.AthensTickDurSec)*time.Second,

@@ -18,6 +18,7 @@ type inMemoryCrawler struct {
 // InMemory creates a new crawler implementation that works only in memory
 func InMemory(
 	ctx context.Context,
+	endpoint string,
 	ghCl *github.Client,
 	ghTickDur time.Duration,
 	athensTickDur time.Duration,
@@ -27,7 +28,7 @@ func InMemory(
 
 	go ghFetcher(ghFetchCoordinator, ghCl, athensWarmCoordinator.ch)
 
-	go athensWarmer(athensWarmCoordinator)
+	go athensWarmer(endpoint, athensWarmCoordinator)
 	return &inMemoryCrawler{
 		ghFetchCoord:    ghFetchCoordinator,
 		athensWarmCoord: athensWarmCoordinator,

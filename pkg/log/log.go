@@ -6,11 +6,8 @@
 package log
 
 import (
-	"fmt"
 	"io"
 	"os"
-
-	"github.com/labstack/gommon/color"
 )
 
 // Stdout is the logging destination for normal messages.
@@ -22,11 +19,18 @@ var Stderr io.Writer = os.Stderr
 // IsDebugging toggles whether or not to enable debug output and behavior.
 var IsDebugging = false
 
+var defaultLogger = NewDefault(IsDebugging)
+
+// SetDebug sets the debug flag for the default logger
+func SetDebug(dbg bool) {
+	defaultLogger = NewDefault(dbg)
+}
+
 // Msg passes through the formatter, but otherwise prints exactly as-is.
 //
 // No prettification.
 func Msg(format string, v ...interface{}) {
-	fmt.Fprintf(Stdout, appendNewLine(format), v...)
+	defaultLogger.Msg(format, v...)
 }
 
 // Check checks err, prints an error message using Err(), and returns err
@@ -34,47 +38,31 @@ func Msg(format string, v ...interface{}) {
 // Otherwise, prints the success format string, formatted with successArgs
 // using Msg, and returns nil.
 func Check(err error, successFmt string, successArgs ...interface{}) error {
-	if err != nil {
-		Err(err.Error())
-		return err
-	}
-	Msg(successFmt, successArgs...)
-	return nil
+	return defaultLogger.Check(err, successFmt, successArgs...)
 }
 
 // Err prints an error message. It does not cause an exit.
 func Err(format string, v ...interface{}) {
-	fmt.Fprint(Stderr, color.Red("[ERROR] "))
-	fmt.Fprintf(Stderr, appendNewLine(format), v...)
+	defaultLogger.Err(format, v...)
 }
 
 // ErrRet does the same thing as Err(format, v...), except returns an
 // error with the given format string and arguments
 func ErrRet(format string, v ...interface{}) error {
-	Err(format, v...)
-	return fmt.Errorf(format, v...)
+	return defaultLogger.ErrRet(format, v...)
 }
 
 // Info prints a green-tinted message.
 func Info(format string, v ...interface{}) {
-	fmt.Fprint(Stderr, "---> ")
-	fmt.Fprintf(Stderr, appendNewLine(format), v...)
+	defaultLogger.Info(format, v...)
 }
 
 // Debug prints a cyan-tinted message if IsDebugging is true.
 func Debug(msg string, v ...interface{}) {
-	if IsDebugging {
-		fmt.Fprint(Stderr, color.Cyan("[DEBUG] "))
-		Msg(msg, v...)
-	}
+	defaultLogger.Debug(msg, v...)
 }
 
 // Warn prints a yellow-tinted warning message.
 func Warn(format string, v ...interface{}) {
-	fmt.Fprint(Stderr, color.Yellow("[WARN] "))
-	Msg(format, v...)
-}
-
-func appendNewLine(format string) string {
-	return format + "\n"
+	defaultLogger.Warn(format, v...)
 }
