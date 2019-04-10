@@ -8,7 +8,8 @@ func athensWarmer(coord *coordinator) {
 		case <-coord.ctx.Done():
 			return
 		case mod := <-coord.ch:
-			log.Info("warming athens with %s", mod)
+			log.Info("TODO: warming athens with %s", mod)
+			// TODO: the real work
 		}
 	}
 }
