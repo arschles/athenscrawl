@@ -38,7 +38,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	var crawler queue.Crawler
+	crawler := queue.InMemory(
+		ctx,
+		ghCl,
+		100*time.Millisecond, // TODO: make configurable
+		100*time.Millisecond, // TODO: make configurable
+	)
 	for _, modAndVer := range res.ModsAndVersions {
 		toCtx, done := context.WithTimeout(ctx, 500*time.Millisecond)
 		defer done()
