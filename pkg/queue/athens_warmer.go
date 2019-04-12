@@ -3,6 +3,7 @@ package queue
 import (
 	"fmt"
 
+	"github.com/arschles/crathens/pkg/ctx"
 	"github.com/arschles/crathens/pkg/log"
 	"github.com/parnurzeal/gorequest"
 	"github.com/souz9/errlist"
@@ -12,13 +13,13 @@ func modInfoPath(endpoint, mod, ver string) string {
 	return fmt.Sprintf("%s/%s/@v/%s.info", endpoint, mod, ver)
 }
 
-func athensWarmer(endpoint string, coord *coordinator) {
-	for range coord.ticker.C {
+func athensWarmer(endpoint string, coord ctx.Coordinator) {
+	for range coord.Ticker().C {
 		select {
-		case <-coord.ctx.Done():
+		case <-coord.Done():
 			log.Debug("Athens warmer exiting because the context is done")
 			return
-		case mod := <-coord.ch:
+		case mod := <-coord.Ch():
 			resp, _, errs := gorequest.
 				New().
 				Get(modInfoPath(endpoint, mod.Module, mod.Version)).

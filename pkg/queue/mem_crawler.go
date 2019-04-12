@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/arschles/crathens/pkg/ctx"
+	pkgctx "github.com/arschles/crathens/pkg/ctx"
 	"github.com/arschles/crathens/pkg/log"
 	"github.com/arschles/crathens/pkg/resp"
 	"github.com/google/go-github/github"
@@ -12,8 +14,8 @@ import (
 )
 
 type inMemoryCrawler struct {
-	ghFetchCoord    *coordinator
-	athensWarmCoord *coordinator
+	ghFetchCoord    *ctx.Coordinator
+	athensWarmCoord *ctx.Coordinator
 }
 
 // InMemory creates a new crawler implementation that works only in memory
@@ -24,8 +26,8 @@ func InMemory(
 	ghTickDur time.Duration,
 	athensTickDur time.Duration,
 ) Crawler {
-	ghFetchCoordinator := newCoordinator(ctx, ghTickDur)
-	athensWarmCoordinator := newCoordinator(ctx, athensTickDur)
+	ghFetchCoordinator := pkgctx.CoordinatorFromCtx(ctx, ghTickDur)
+	athensWarmCoordinator := pkgctx.CoordinatorFromCtx(ctx, athensTickDur)
 
 	go ghFetcher(ghFetchCoordinator, ghCl, athensWarmCoordinator.ch)
 

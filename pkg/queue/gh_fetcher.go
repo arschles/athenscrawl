@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"github.com/arschles/crathens/pkg/ctx"
 	gh "github.com/arschles/crathens/pkg/github"
 	"github.com/arschles/crathens/pkg/log"
 	"github.com/arschles/crathens/pkg/resp"
@@ -8,17 +9,17 @@ import (
 )
 
 func ghFetcher(
-	coord *coordinator,
+	coord ctx.Coordinator,
 	ghCl *github.Client,
 	nextCh chan<- resp.ModuleAndVersion,
 ) {
-	for range coord.ticker.C {
+	for range coord.Ticker().C {
 		select {
-		case <-coord.ctx.Done():
+		case <-coord.Done():
 			log.Debug("GitHub fetcher exiting because the context is done")
 			return
-		case mod := <-coord.ch:
-			tags, err := gh.FetchTags(coord.ctx, ghCl, mod.Module)
+		case mod := <-coord.Ch():
+			tags, err := gh.FetchTags(coord, ghCl, mod.Module)
 			if err != nil {
 				log.Warn("fetching GH tags for %s (%s)", mod, err)
 			}
@@ -26,7 +27,7 @@ func ghFetcher(
 				newMod := mod
 				mod.Version = tag
 				select {
-				case <-coord.ctx.Done():
+				case <-coord.Done():
 					return
 				case nextCh <- newMod:
 				}
