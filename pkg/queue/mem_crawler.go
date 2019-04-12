@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/arschles/crathens/pkg/ctx"
 	pkgctx "github.com/arschles/crathens/pkg/ctx"
 	"github.com/arschles/crathens/pkg/log"
 	"github.com/arschles/crathens/pkg/resp"
@@ -14,8 +13,8 @@ import (
 )
 
 type inMemoryCrawler struct {
-	ghFetchCoord    *ctx.Coordinator
-	athensWarmCoord *ctx.Coordinator
+	ghFetchCoord    pkgctx.Coordinator
+	athensWarmCoord pkgctx.Coordinator
 }
 
 // InMemory creates a new crawler implementation that works only in memory
@@ -29,7 +28,7 @@ func InMemory(
 	ghFetchCoordinator := pkgctx.CoordinatorFromCtx(ctx, ghTickDur)
 	athensWarmCoordinator := pkgctx.CoordinatorFromCtx(ctx, athensTickDur)
 
-	go ghFetcher(ghFetchCoordinator, ghCl, athensWarmCoordinator.ch)
+	go ghFetcher(ghFetchCoordinator, ghCl, athensWarmCoordinator.Ch())
 
 	go athensWarmer(endpoint, athensWarmCoordinator)
 
@@ -44,7 +43,7 @@ func (i *inMemoryCrawler) Enqueue(
 	mav resp.ModuleAndVersion,
 ) error {
 	select {
-	case i.ghFetchCoord.ch <- mav:
+	case i.ghFetchCoord.Ch() <- mav:
 		log.Debug("enqueued %s onto the in-memory crawler", mav)
 		return nil
 	case <-ctx.Done():
@@ -57,14 +56,14 @@ func (i *inMemoryCrawler) Enqueue(
 
 func (i *inMemoryCrawler) Wait(context.Context) error {
 	select {
-	case <-i.athensWarmCoord.ctx.Done():
+	case <-i.athensWarmCoord.DoneCh():
 		log.Debug(
 			"The Athens warmer stopped, cleaning up tickers/contexts and error-ing",
 		)
 		i.stopTickers()
 		i.stopContexts()
 		return errors.WithStack(fmt.Errorf("Athens fetcher stopped"))
-	case <-i.ghFetchCoord.ctx.Done():
+	case <-i.ghFetchCoord.DoneCh():
 		log.Debug(
 			"The GitHub fetcher stopped, cleaning up tickers/contexts and error-ing",
 		)
@@ -75,11 +74,11 @@ func (i *inMemoryCrawler) Wait(context.Context) error {
 }
 
 func (i *inMemoryCrawler) stopTickers() {
-	i.ghFetchCoord.ticker.Stop()
-	i.athensWarmCoord.ticker.Stop()
+	i.ghFetchCoord.Ticker().Stop()
+	i.athensWarmCoord.Ticker().Stop()
 }
 
 func (i *inMemoryCrawler) stopContexts() {
-	i.ghFetchCoord.ctxDone()
-	i.athensWarmCoord.ctxDone()
+	i.ghFetchCoord.StopCtx()
+	i.athensWarmCoord.StopCtx()
 }

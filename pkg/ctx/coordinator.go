@@ -14,6 +14,7 @@ type Coordinator interface {
 	Ticker() *time.Ticker
 	Ch() chan resp.ModuleAndVersion
 	StopCtx()
+	DoneCh() <-chan struct{}
 }
 
 type coordinator struct {
@@ -33,6 +34,10 @@ func (c *coordinator) Ch() chan resp.ModuleAndVersion {
 
 func (c *coordinator) StopCtx() {
 	c.ctxDone()
+}
+
+func (c *coordinator) DoneCh() <-chan struct{} {
+	return c.Done()
 }
 
 // CoordinatorFromCtx creates a new coordinator from a given context
